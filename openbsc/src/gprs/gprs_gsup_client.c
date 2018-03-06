@@ -133,6 +133,9 @@ static int gsup_client_read_cb(struct ipa_client_conn *link, struct msgb *msg)
 
 	msg->l2h = &hh->data[0];
 
+	LOGP(DGPRS, LOGL_DEBUG, "gsup_client_read_cb Length: %X, Proto: 0x%X, data %X %X %X %X\n", hh->len, hh->proto,
+		hh->data[0], hh->data[1], hh->data[2], hh->data[3]);
+
 	rc = ipaccess_bts_handle_ccm(link, &ipa_dev, msg);
 
 	if (rc < 0) {
@@ -157,8 +160,11 @@ static int gsup_client_read_cb(struct ipa_client_conn *link, struct msgb *msg)
 		return 0;
 	}
 
-	if (hh->proto != IPAC_PROTO_OSMO)
+	if (hh->proto != IPAC_PROTO_OSMO){
+		DEBUGP(DMM, "IPAC_PROTO_OSMO error\n");
 		goto invalid;
+	}
+
 
 	if (!he || msgb_l2len(msg) < sizeof(*he) ||
 	    he->proto != IPAC_PROTO_EXT_GSUP)

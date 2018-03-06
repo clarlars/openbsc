@@ -1065,6 +1065,7 @@ int bsc_vty_init_extra(void)
 	install_element_ve(&show_stats_cmd);
 	install_element_ve(&show_smsqueue_cmd);
 	install_element_ve(&logging_fltr_imsi_cmd);
+	install_element_ve(&sup_ussd_destination_cmd);
 
 	install_element(ENABLE_NODE, &ena_subscr_delete_cmd);
 	install_element(ENABLE_NODE, &ena_subscr_name_cmd);
@@ -1079,6 +1080,7 @@ int bsc_vty_init_extra(void)
 	install_element(ENABLE_NODE, &smsqueue_fail_cmd);
 	install_element(ENABLE_NODE, &subscriber_send_pending_sms_cmd);
 	install_element(ENABLE_NODE, &meas_feed_scenario_cmd);
+	// install_element(ENABLE_NODE, &sup_ussd_destination_cmd);
 
 	install_element(CONFIG_NODE, &cfg_mncc_int_cmd);
 	install_node(&mncc_int_node, config_write_mncc_int);

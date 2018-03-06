@@ -115,11 +115,14 @@ static struct gsm_ussd* get_by_id(struct gsm_subscriber_connection *conn, uint8_
 
 int on_ussd_response(const struct ss_request *req, const char *extention)
 {
+	DEBUGP(DMM, "Got Response!\n");
 	struct ussd_request ussd_req;
 	struct gsm_ussd* ussdq = get_by_uniq_id(req->invoke_id);
 	memset(&ussd_req, 0, sizeof(ussd_req));
 	int rc;
 	uint8_t mtype;
+
+	DEBUGP(DMM, "opcode: %X\n", req->opcode);
 
 	switch (req->opcode) {
 	case GSM0480_OP_CODE_USS_NOTIFY:
@@ -159,6 +162,7 @@ int on_ussd_response(const struct ss_request *req, const char *extention)
 	ussd_req.invoke_id = ussdq->invoke_id;
 
 	if (req->ussd_text[0]) {
+		DEBUGP(DMM, "Sending Response?\n");
 		rc = gsm0480_send_ussd_response(ussdq->conn,
 						NULL,
 						(const char *)req->ussd_text,
@@ -210,7 +214,8 @@ int handle_rcv_ussd(struct gsm_subscriber_connection *conn, struct msgb *msg)
 		if (ussdq) {
 			/* new session with the same id as an open session, destroy both */
 			DEBUGP(DMM, "Duplicate session? invoke_id: %d\n", req.invoke_id);
-			goto failed;
+			// goto failed;
+			ussd_session_free(ussdq);
 		}
 
 		if (req.component_type != GSM0480_CTYPE_INVOKE) {
@@ -219,6 +224,7 @@ int handle_rcv_ussd(struct gsm_subscriber_connection *conn, struct msgb *msg)
 		}
 
 		ussdq = ussd_session_alloc(conn);
+		DEBUGP(DMM, "Alloc USSD session: %d\n", ussdq->uniq_id);
 		if (!ussdq) {
 			DEBUGP(DMM, "Failed to create new session\n");
 			goto failed;
@@ -251,6 +257,7 @@ int handle_rcv_ussd(struct gsm_subscriber_connection *conn, struct msgb *msg)
 	// ACHTUNG! FIXME!! FIXME!! Introduce transaction ID instead
 	// Override Invoke ID
 	req.invoke_id = ussdq->uniq_id;
+
 	rc = subscr_tx_uss_message(&req, conn->subscr);
 	if (rc) {
 		DEBUGP(DMM, "Unable tp send uss over sup reason: %d\n", rc);

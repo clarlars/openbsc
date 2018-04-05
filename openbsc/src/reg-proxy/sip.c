@@ -16,6 +16,7 @@
 #define EXPIRES_TIME_INSECS 3600
 #define SIP_ALLOW "REGISTER, INVITE, INFO, ACK, CANCEL, BYE"
 
+void fsm_pp_stuff(type_t type, state_t state);
 
 
 int get_seqnum(void)
@@ -298,7 +299,11 @@ void sip_cb_rcv6xx(int type, osip_transaction_t *pott,osip_message_t *pomt)
 void sip_cb_ict_rcv2xx(int type, osip_transaction_t *tr, osip_message_t *sip_msg)
 {
 	printf("OSIP_ICT_STATUS_2XX_RECEIVED\n");
+	fsm_pp_stuff(UNKNOWN_EVT, tr->state);
 	//osip_contact_t *contact;
+	// if (tr->state == ICT_CALLING) {
+	// 	tr->state = ICT_PROCEEDING;
+	// }
 	osip_to_t* to;
 	osip_from_t* from;
 	struct sip_client *sip_client = osip_transaction_get_your_instance(tr);
@@ -340,7 +345,7 @@ void sip_cb_ict_rcv2xx(int type, osip_transaction_t *tr, osip_message_t *sip_msg
 		OSIP_TRACE(osip_trace(__FILE__,__LINE__,OSIP_BUG,NULL,"Can't init message!\n"));
 		return;
 	}
-
+	printf("Prepare for ACK\n");
 	osip_message_set_method(ack_msg, osip_strdup("ACK"));
 
 	osip_uri_init(&(ack_msg->req_uri));
@@ -376,7 +381,7 @@ void sip_cb_ict_rcv2xx(int type, osip_transaction_t *tr, osip_message_t *sip_msg
 		 //from->url->host,
 		 //from->url->port,
 		 "127.0.0.1",
-		 "5150",
+		 "5060",
 		 osip_build_random_number());
 
 	osip_message_set_via(ack_msg, tmp);
@@ -400,6 +405,7 @@ void sip_cb_ict_rcv2xx(int type, osip_transaction_t *tr, osip_message_t *sip_msg
 		printf("Failed to init transaction %d\n", status);
 		return ;
 	}
+	transaction->state = tr->state;
 
 	osip_transaction_set_your_instance(transaction, sip_client);
 	osip_transaction_set_reserved5(transaction, dialog);
@@ -411,7 +417,7 @@ void sip_cb_ict_rcv2xx(int type, osip_transaction_t *tr, osip_message_t *sip_msg
 		osip_message_free(ack_msg);
 		return ;
 	}
-
+	printf("forcing update\n");
 	sip_event->transactionid = transaction->transactionid;
 	status = osip_message_force_update(ack_msg);
 	if (status) {
@@ -426,11 +432,16 @@ void sip_cb_ict_rcv2xx(int type, osip_transaction_t *tr, osip_message_t *sip_msg
 		osip_message_free(ack_msg);
 		return;
 	}
-
+	fsm_pp_stuff(sip_event->type, transaction->state);
+	printf("Event added, waiting message to send ..... %d\n",status);
+	printf("Executing\n");
 	osip_ict_execute(osip);
-//	osip_start_ack_retransmissions(transaction,
-//				       dialog, ack_msg, to->url->host,
-//				       (to->url->port) ? atoi(to->url->port) : 5060, -1);
+	
+	// this makes it crash :(
+	// osip_start_ack_retransmissions(transaction,
+	// 			       dialog, ack_msg, to->url->host,
+	// 			       (to->url->port) ? atoi(to->url->port) : 5060, -1);
+	printf("Executed\n");
 
 }
 
@@ -611,4 +622,103 @@ int tx_ss_handle(struct sip_client *sip_client, osip_t *osip, struct ss_request 
 
 	return 0;
 
+}
+
+void fsm_pp_stuff(type_t type, state_t state) {
+  switch (type) {
+  case TIMEOUT_A:
+    printf("Type: TIMEOUT_A\n");
+    break;
+  case TIMEOUT_B:
+    printf("Type: TIMEOUT_B\n");
+    break;
+  case TIMEOUT_D:
+    printf("Type: TIMEOUT_D\n");
+    break;
+  case TIMEOUT_E:
+    printf("Type: TIMEOUT_E\n");
+    break;
+  case TIMEOUT_F:
+    printf("Type: TIMEOUT_F\n");
+    break;
+  case TIMEOUT_K:
+    printf("Type: TIMEOUT_K\n");
+    break;
+  case TIMEOUT_G:
+    printf("Type: TIMEOUT_G\n");
+    break;
+  case TIMEOUT_H:
+    printf("Type: TIMEOUT_H\n");
+    break;
+  case TIMEOUT_I:
+    printf("Type: TIMEOUT_I\n");
+    break;
+  case TIMEOUT_J:
+    printf("Type: TIMEOUT_J\n");
+    break;
+  case RCV_REQINVITE:
+    printf("Type: RCV_REQINVITE\n");
+    break;
+  case RCV_REQACK:
+    printf("Type: RCV_REQACK\n");
+    break;
+  case RCV_REQUEST:
+    printf("Type: RCV_REQUEST\n");
+    break;
+  case RCV_STATUS_1XX:
+    printf("Type: RCV_STATUS_1XX\n");
+    break;
+  case RCV_STATUS_2XX:
+    printf("Type: RCV_STATUS_2XX\n");
+    break;
+  case RCV_STATUS_3456XX:
+    printf("Type: RCV_STATUS_3456XX\n");
+    break;
+  case SND_REQINVITE:
+    printf("Type: SND_REQINVITE\n");
+    break;
+  case SND_REQACK:
+    printf("Type: SND_REQACK\n");
+    break;
+  case SND_REQUEST:
+    printf("Type: SND_REQUEST\n");
+    break;
+  case SND_STATUS_1XX:
+    printf("Type: SND_STATUS_1XX\n");
+    break;
+  case SND_STATUS_2XX:
+    printf("Type: SND_STATUS_2XX\n");
+    break;
+  case SND_STATUS_3456XX:
+    printf("Type: SND_STATUS_3456XX\n");
+    break;
+  case KILL_TRANSACTION:
+    printf("Type: KILL_TRANSACTION\n");
+    break;
+  case UNKNOWN_EVT:
+    printf("Type: UNKNOWN_EVT\n");
+    break;
+  default:
+  break;
+  }
+
+  switch (state) {
+    case ICT_PRE_CALLING:
+    printf("State: ICT_PRE_CALLING\n");
+    break;
+    case ICT_CALLING:
+    printf("State: ICT_CALLING\n");
+    break;
+    case ICT_PROCEEDING:
+    printf("State: ICT_PROCEEDING\n");
+    break;
+    case ICT_COMPLETED:
+    printf("State: ICT_COMPLETED\n");
+    break;
+    case ICT_TERMINATED:
+    printf("State: ICT_TERMINATED\n");
+    break;
+    default:
+    break;
+  }
 }

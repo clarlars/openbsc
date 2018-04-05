@@ -58,7 +58,8 @@ static int rx_uss_message_parse(struct ss_request *ss,
 	/* skip GPRS_GSUP_MSGT_MAP */
 	ss->message_type = *(++const_data);
 	ss->component_type = *(++const_data);
-	const_data += 2;
+	ss->transaction_id = *(++const_data);
+	const_data += 1;
 
 	//
 	if (*const_data != GSM0480_COMPIDTAG_INVOKE_ID) {
@@ -231,6 +232,8 @@ int rx_sup_message(struct gsm_sup_server *sup_server, struct msgb *msg)
 
 	struct gprs_gsup_message sup_msg = {0};
 	//struct gsm_subscriber *subscr;
+	LOGP(DSUP, LOGL_INFO,
+		   "Receive data: %s\n", msgb_hexdump(msg));
 
     if (*data == GPRS_GSUP_MSGT_MAP) {
 	LOGP(DSUP, LOGL_INFO,
